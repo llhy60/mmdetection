@@ -1,5 +1,5 @@
-ARG PYTORCH="1.6.0"
-ARG CUDA="10.1"
+ARG PYTORCH="1.8.1"
+ARG CUDA="10.2"
 ARG CUDNN="7"
 
 FROM pytorch/pytorch:${PYTORCH}-cuda${CUDA}-cudnn${CUDNN}-devel
@@ -17,8 +17,10 @@ RUN apt-get update && apt-get install -y ffmpeg libsm6 libxext6 git ninja-build 
     && rm -rf /var/lib/apt/lists/*
 
 # Install MMCV
-RUN pip install --no-cache-dir --upgrade pip wheel setuptools
-RUN pip install --no-cache-dir mmcv-full==1.3.17 -f https://download.openmmlab.com/mmcv/dist/cu101/torch1.6.0/index.html
+RUN pip install --no-cache-dir --upgrade pip wheel setuptools -i https//pypi.douban.com/simple
+# RUN pip install --no-cache-dir mmcv-full==1.3.17 -f https://download.openmmlab.com/mmcv/dist/cu101/torch1.6.0/index.html
+RUN pip install openmim
+RUN mim install mmcv-full==1.5.1
 
 # Install MMDetection
 RUN conda clean --all
@@ -26,4 +28,10 @@ RUN git clone https://github.com/open-mmlab/mmdetection.git /mmdetection
 WORKDIR /mmdetection
 ENV FORCE_CUDA="1"
 RUN pip install --no-cache-dir -r requirements/build.txt
+RUN pip install --no-cache-dir -e .
+
+# Install MMClassification
+RUN conda clean --all
+RUN git clone https://github.com/open-mmlab/mmclassification.git
+WORKDIR ./mmclassification
 RUN pip install --no-cache-dir -e .
