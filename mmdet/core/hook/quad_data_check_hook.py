@@ -16,7 +16,7 @@ class QuadDataCheckHook(Hook):
         # data and iter from runner
         data_loader = runner.data_loader 
         index = runner._inner_iter 
-        if index > self.max_check_iten: 
+        if index > self.max_check_iter: 
             return
         data_iter = itertools.islice(data_loader, index, index+1) 
         out_dir = self.work_dir
