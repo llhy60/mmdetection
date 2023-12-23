@@ -353,7 +353,7 @@ def imshow_det_bboxes(img,
     stream, _ = canvas.print_to_buffer()
     buffer = np.frombuffer(stream, dtype='uint8')
     if sys.platform == 'darwin':
-        width, height = canvas.get_width_height(physical=True)
+        width, height = canvas.get_width_height()
     img_rgba = buffer.reshape(height, width, 4)
     rgb, alpha = np.split(img_rgba, [3], axis=2)
     img = rgb.astype('uint8')

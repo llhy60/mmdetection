@@ -8,8 +8,10 @@ from .pseudo_bbox_coder import PseudoBBoxCoder
 from .tblr_bbox_coder import TBLRBBoxCoder
 from .yolo_bbox_coder import YOLOBBoxCoder
 
+from .quad_yolox_bbox_coder import QuadYOLOXBBoxCoder
+
 __all__ = [
     'BaseBBoxCoder', 'PseudoBBoxCoder', 'DeltaXYWHBBoxCoder',
     'LegacyDeltaXYWHBBoxCoder', 'TBLRBBoxCoder', 'YOLOBBoxCoder',
-    'BucketingBBoxCoder', 'DistancePointBBoxCoder'
+    'BucketingBBoxCoder', 'DistancePointBBoxCoder', 'QuadYOLOXBBoxCoder'
 ]

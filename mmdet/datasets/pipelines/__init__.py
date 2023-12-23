@@ -3,18 +3,20 @@ from .auto_augment import (AutoAugment, BrightnessTransform, ColorTransform,
                            ContrastTransform, EqualizeTransform, Rotate, Shear,
                            Translate)
 from .compose import Compose
-from .formatting import (Collect, DefaultFormatBundle, ImageToTensor,
+from .formatting import (Collect, DefaultFormatBundle, QuadFormatBundle, ImageToTensor,
                          ToDataContainer, ToTensor, Transpose, to_tensor)
 from .instaboost import InstaBoost
 from .loading import (FilterAnnotations, LoadAnnotations, LoadImageFromFile,
                       LoadImageFromWebcam, LoadMultiChannelImageFromFiles,
-                      LoadPanopticAnnotations, LoadProposals)
+                      LoadPanopticAnnotations, LoadProposals, LoadQuadAnnotations)
 from .test_time_aug import MultiScaleFlipAug
 from .transforms import (Albu, CopyPaste, CutOut, Expand, MinIoURandomCrop,
                          MixUp, Mosaic, Normalize, Pad, PhotoMetricDistortion,
                          RandomAffine, RandomCenterCropPad, RandomCrop,
                          RandomFlip, RandomShift, Resize, SegRescale,
                          YOLOXHSVRandomAug)
+from .quad_transforms import (QuadResize, RotateAngle, RotQuadWarp, QuadMosaic,
+                              QuadMixUp)
 
 __all__ = [
     'Compose', 'to_tensor', 'ToTensor', 'ImageToTensor', 'ToDataContainer',
@@ -27,5 +29,8 @@ __all__ = [
     'AutoAugment', 'CutOut', 'Shear', 'Rotate', 'ColorTransform',
     'EqualizeTransform', 'BrightnessTransform', 'ContrastTransform',
     'Translate', 'RandomShift', 'Mosaic', 'MixUp', 'RandomAffine',
-    'YOLOXHSVRandomAug', 'CopyPaste'
+    'YOLOXHSVRandomAug', 'CopyPaste',
+    # quad detection
+    'QuadFormatBundle', 'LoadQuadAnnotations', 'QuadResize', 'RotateAngle',
+    'RotQuadWarp', 'QuadMosaic', 'QuadMixUp'
 ]
