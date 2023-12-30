@@ -7,6 +7,7 @@ from mmcv.utils import print_log
 from terminaltables import AsciiTable
 
 from .bbox_overlaps import bbox_overlaps
+from .quad_bbox_overlaps import quad_bbox_overlaps
 from .class_names import get_classes
 
 
@@ -117,8 +118,12 @@ def tpfp_imagenet(det_bboxes,
             for i, (min_area, max_area) in enumerate(area_ranges):
                 fp[i, (det_areas >= min_area) & (det_areas < max_area)] = 1
         return tp, fp
-    ious = bbox_overlaps(
-        det_bboxes, gt_bboxes - 1, use_legacy_coordinate=use_legacy_coordinate)
+    if det_bboxes.shape[-1] == 9:
+        ious = quad_bbox_overlaps(
+            det_bboxes[..., :8], gt_bboxes - 1, mode='ciou', use_legacy_coordinate=use_legacy_coordinate)
+    elif det_bboxes.shape[-1] == 5:
+        ious = bbox_overlaps(
+            det_bboxes, gt_bboxes - 1, use_legacy_coordinate=use_legacy_coordinate)
     gt_w = gt_bboxes[:, 2] - gt_bboxes[:, 0] + extra_length
     gt_h = gt_bboxes[:, 3] - gt_bboxes[:, 1] + extra_length
     iou_thrs = np.minimum((gt_w * gt_h) / ((gt_w + 10.0) * (gt_h + 10.0)),
@@ -199,7 +204,7 @@ def tpfp_default(det_bboxes,
         extra_length = 0.
     else:
         extra_length = 1.
-
+    gt_bboxes_ignore = np.zeros((0, 8))
     # an indicator of ignored gts
     gt_ignore_inds = np.concatenate(
         (np.zeros(gt_bboxes.shape[0], dtype=np.bool),
@@ -230,8 +235,12 @@ def tpfp_default(det_bboxes,
                 fp[i, (det_areas >= min_area) & (det_areas < max_area)] = 1
         return tp, fp
 
-    ious = bbox_overlaps(
-        det_bboxes, gt_bboxes, use_legacy_coordinate=use_legacy_coordinate)
+    if det_bboxes.shape[-1] == 9:
+        ious = quad_bbox_overlaps(
+            det_bboxes[..., :8], gt_bboxes - 1, mode='ciou', use_legacy_coordinate=use_legacy_coordinate)
+    elif det_bboxes.shape[-1] == 5:
+        ious = bbox_overlaps(
+            det_bboxes, gt_bboxes - 1, use_legacy_coordinate=use_legacy_coordinate)
     # for each det, the max iou with all gts
     ious_max = ious.max(axis=1)
     # for each det, which gt overlaps most with it
@@ -244,8 +253,15 @@ def tpfp_default(det_bboxes,
         if min_area is None:
             gt_area_ignore = np.zeros_like(gt_ignore_inds, dtype=bool)
         else:
-            gt_areas = (gt_bboxes[:, 2] - gt_bboxes[:, 0] + extra_length) * (
-                gt_bboxes[:, 3] - gt_bboxes[:, 1] + extra_length)
+            if gt_bboxes.shape[1] == 8:
+                x1 = min(gt_bboxes[:, 0], gt_bboxes[:, 2], gt_bboxes[:, 4], gt_bboxes[:, 6])
+                y1 = min(gt_bboxes[:, 1], gt_bboxes[:, 3], gt_bboxes[:, 5], gt_bboxes[:, 7])
+                x2 = max(gt_bboxes[:, 0], gt_bboxes[:, 2], gt_bboxes[:, 4], gt_bboxes[:, 6])
+                y2 = max(gt_bboxes[:, 1], gt_bboxes[:, 3], gt_bboxes[:, 5], gt_bboxes[:, 7])
+                gt_areas = (x2 - x1 + extra_length) * (y2 - y1 + extra_length)
+            elif gt_bboxes.shape[1] == 4:
+                gt_areas = (gt_bboxes[:, 2] - gt_bboxes[:, 0] + extra_length) * (
+                            gt_bboxes[:, 3] - gt_bboxes[:, 1] + extra_length)
             gt_area_ignore = (gt_areas < min_area) | (gt_areas >= max_area)
         for i in sort_inds:
             if ious_max[i] >= iou_thr:
@@ -261,9 +277,18 @@ def tpfp_default(det_bboxes,
             elif min_area is None:
                 fp[k, i] = 1
             else:
-                bbox = det_bboxes[i, :4]
-                area = (bbox[2] - bbox[0] + extra_length) * (
-                    bbox[3] - bbox[1] + extra_length)
+                if det_bboxes.shape[-1] == 9:
+                    bbox = det_bboxes[i, :8]
+                    det_x1 = min(bbox[0], bbox[2], bbox[4], bbox[6])
+                    det_y1 = min(bbox[1], bbox[3], bbox[5], bbox[7])
+                    det_x2 = max(bbox[0], bbox[2], bbox[4], bbox[6])
+                    det_y2 = max(bbox[1], bbox[3], bbox[5], bbox[7])
+                    area = (det_x2 - det_x1 + extra_length) * (
+                    det_y2 - det_y1 + extra_length)
+                elif det_bboxes.shape[-1] == 5:
+                    bbox = det_bboxes[i, :4]
+                    area = (bbox[2] - bbox[0] + extra_length) * (
+                        bbox[3] - bbox[1] + extra_length)
                 if area >= min_area and area < max_area:
                     fp[k, i] = 1
     return tp, fp
@@ -490,7 +515,10 @@ def get_cls_results(det_results, annotations, class_id):
     cls_gts_ignore = []
     for ann in annotations:
         gt_inds = ann['labels'] == class_id
-        cls_gts.append(ann['bboxes'][gt_inds, :])
+        if cls_dets[0].shape[1] == 9:
+            cls_gts.append(ann['quad_bboxes'][gt_inds, :])
+        elif cls_dets[0].shape[1] == 5:
+            cls_gts.append(ann['bboxes'][gt_inds, :])
 
         if ann.get('labels_ignore', None) is not None:
             ignore_inds = ann['labels_ignore'] == class_id
