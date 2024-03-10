@@ -276,7 +276,7 @@ class QuadYOLOXHead(QuadBaseDenseHead, BBoxTestMixin):
             for cls_score in cls_scores
         ]
         flatten_bbox_preds = [
-            bbox_pred.permute(0, 2, 3, 1).reshape(num_imgs, -1, 4)
+            bbox_pred.permute(0, 2, 3, 1).reshape(num_imgs, -1, self.bbox_coder_dim)
             for bbox_pred in bbox_preds
         ]
         flatten_objectness = [
@@ -325,7 +325,7 @@ class QuadYOLOXHead(QuadBaseDenseHead, BBoxTestMixin):
         if labels.numel() == 0:
             return rot_nms_bboxes, labels
         else:
-            _, keep = nms_rotated(rot_nms_bboxes.to(scores.device), scores, cfg.nms.iou_thr, labels)
+            _, keep = nms_rotated(rot_nms_bboxes.to(scores.device), scores, cfg.nms.iou_threshold, labels)
             quad_bboxes = quad_bboxes[valid_mask]
             quad_bboxes = torch.cat([quad_bboxes, scores[:, None]], -1)
             dets = quad_bboxes[keep]

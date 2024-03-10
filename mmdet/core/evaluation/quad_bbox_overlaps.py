@@ -1,8 +1,11 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+
 import math
 import numpy as np
 from shapely.errors import TopologicalError 
 from shapely.geometry import Polygon, MultiPoint
+
+
 def quad_bbox_iou(polygon_area1, polygon_area2, eps=1e-6):
     if polygon_area1.intersects(polygon_area2):
         try:
@@ -17,10 +20,11 @@ def quad_bbox_iou(polygon_area1, polygon_area2, eps=1e-6):
     return iou
 
 def quad_bbox_ciou(polygon_area1, polygon_area2, eps=1e-6):
-    polygon1 = np.array(polygon_area1.exterior)[:-1]
-    print(np.array(polygon_area1.exterior))
-    print(np.array(polygon_area1.exterior)[:-1])
-    polygon2 = np.array(polygon_area2.exterior)[:-1]
+    try:
+        polygon1 = np.array(polygon_area1.exterior)[:-1]
+        polygon2 = np.array(polygon_area2.exterior)[:-1]
+    except Exception as e:
+        print(np.array(polygon_area1.exterior)[:-1])
 
     b1_center = np.sum(polygon1, 0) / 4
     b2_center = np.sum(polygon2, 0) / 4
@@ -73,7 +77,6 @@ def quad_bbox_overlaps(bboxes1, bboxes2, mode='iou', eps=1e-6, use_legacy_coordi
     Returns:
         ious (ndarray): Shape (n, k)
     """
-
     assert mode in ['iou', 'ciou']
     if not use_legacy_coordinate:
         extra_length = 0.
@@ -96,7 +99,6 @@ def quad_bbox_overlaps(bboxes1, bboxes2, mode='iou', eps=1e-6, use_legacy_coordi
         for j in range(bboxes2.shape[0]):
             polygon_area1 = Polygon(bboxes1[i,:].reshape(4,2)).convex_hull
             polygon_area2 = Polygon(bboxes2[j,:].reshape(4,2)).convex_hull
-
             if mode == 'iou':
                 ious[i, j] = quad_bbox_iou(polygon_area1, polygon_area2)
             elif mode == 'ciou':
@@ -105,16 +107,3 @@ def quad_bbox_overlaps(bboxes1, bboxes2, mode='iou', eps=1e-6, use_legacy_coordi
     if exchange:
         ious = ious.T
     return ious
-
-
-if __name__ == "__main__":
-    bboxes1 = np.array([[908., 215., 934., 312., 752., 355., 728., 252.],
-                        [908., 215., 934., 312., 752., 355., 728., 252.],
-                        [-908., 215., 934., 312., 752., 355., 728., 252.],
-                        [908., 215., 934., 312., 752., 355., 728., 252.]])
-    bboxes2 = np.array([[923., 308, 758, 342, 741, 262, 907, 228],
-                        [923., 308, 758, 342, 741, 262, 967, 228],
-                        [923., 308, 758, 342, 741, 262, 907, 228],
-                        [923., 308, 758, 342, 741, 262, 907, 228]])
-    res = quad_bbox_overlaps(bboxes1, bboxes2, mode='ciou', eps=1-6)
-    print(res)
